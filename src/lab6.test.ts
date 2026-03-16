@@ -34,6 +34,14 @@ describe('PickedByType', () => {
     expectTypeOf<OnlyString>().toEqualTypeOf<{
       a: string;
     }>();
+    type OnlyNumber = PickedByType<Source, number>;
+    expectTypeOf<OnlyNumber>().toEqualTypeOf<{
+      b: number;
+    }>();
+    type OnlyBoolean = PickedByType<Source, boolean>;
+    expectTypeOf<OnlyBoolean>().toEqualTypeOf<{
+      d: boolean;
+    }>();
   });
 });
 
