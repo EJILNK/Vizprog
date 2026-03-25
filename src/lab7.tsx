@@ -24,6 +24,7 @@ type BookCardProps = {
 const styles = {
   page: {
     fontFamily: 'Arial, sans-serif',
+    background: "#a8965aff",
     margin: '0 auto',
     maxWidth: '1200px',
     padding: '24px'
@@ -47,7 +48,7 @@ const styles = {
   } satisfies React.CSSProperties,
   cover: {
     alignSelf: 'center',
-    background: '#939393',
+    background: '#3b375fff',
     borderRadius: '4px',
     height: '280px',
     objectFit: 'cover',
@@ -55,7 +56,7 @@ const styles = {
   } satisfies React.CSSProperties,
   placeholder: {
     alignItems: 'center',
-    color: '#777777',
+    color: '#000000ff',
     display: 'flex',
     fontSize: '14px',
     justifyContent: 'center'
@@ -66,12 +67,12 @@ const styles = {
     margin: '12px 0 8px'
   } satisfies React.CSSProperties,
   authors: {
-    color: '#555555',
+    color: '#df0b0bff',
     fontSize: '16px',
     margin: 0
   } satisfies React.CSSProperties,
   message: {
-    color: '#444444',
+    color: '#c6c912ff',
     fontSize: '16px',
     marginTop: '8px'
   } satisfies React.CSSProperties,
