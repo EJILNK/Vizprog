@@ -1,15 +1,10 @@
 import React from 'react'
-import { createRoot } from 'react-dom/client'
-import Lab7 from './lab7'
+import ReactDOM from 'react-dom/client'
+import { Main } from './Main1'
 
-const rootElement = document.getElementById('root')
-
-if (!rootElement) {
-  throw new Error('Root element with id "root" was not found')
-}
-
-createRoot(rootElement).render(
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <Lab7 />
+    <Main/>
   </React.StrictMode>
-)
+);
+
