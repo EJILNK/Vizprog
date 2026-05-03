@@ -54,12 +54,12 @@
 
 .spreadsheet_column_header {
   top: 0;
-  width: 120px;
-  min-width: 120px;
   height: 28px;
+  position: sticky;
 }
 
 .spreadsheet_row_header {
+  position: sticky;
   left: 0;
   width: 48px;
   min-width: 48px;
@@ -67,8 +67,6 @@
 }
 
 .cell {
-  width: 120px;
-  min-width: 120px;
   height: 28px;
   padding: 4px;
   border: 1px solid #472323;
@@ -117,4 +115,36 @@
 
 .context_menu button:hover {
   background: #eeeeee;
+}
+
+.spreadsheet_column_header {
+  position: relative;
+}
+
+.spreadsheet_column_resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.spreadsheet_column_resizer:hover {
+  background: rgb(59 130 246 / 25%);
+}
+
+.spreadsheet_row_resizer {
+  position: absolute;
+  right: 0;
+  bottom: -3px;
+  left: 0;
+  height: 6px;
+  cursor: row-resize;
+  user-select: none;
+}
+
+.spreadsheet_row_resizer:hover {
+  background: rgb(59 130 246 / 25%);
 }

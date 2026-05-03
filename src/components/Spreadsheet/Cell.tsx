@@ -3,6 +3,8 @@ import React, { memo, useEffect, useState } from 'react';
 type CellProps = {
   value: string;
   rawValue: string;
+  width: number;
+  height: number;
   isActive: boolean;
   isEditing: boolean;
   isSelected: boolean;
@@ -16,6 +18,8 @@ type CellProps = {
 export const Cell = memo(function Cell({
   value,
   rawValue,
+  width,
+  height,
   isActive,
   isEditing,
   isSelected,
@@ -49,7 +53,14 @@ export const Cell = memo(function Cell({
 
   if (isEditing) {
     return (
-      <td className="cell cell_active">
+      <td
+        className="cell cell_active"
+        style={{
+          width,
+          minWidth: width,
+          height,
+        }}
+      >
         <input
           className="cell_input"
           value={localValue}
@@ -75,6 +86,11 @@ export const Cell = memo(function Cell({
   return (
     <td
       className={className.join(' ')}
+      style={{
+        width,
+        minWidth: width,
+        height,
+      }}
       onClick={onSelect}
       onDoubleClick={onStartEdit}
       onContextMenu={onContexMenu}

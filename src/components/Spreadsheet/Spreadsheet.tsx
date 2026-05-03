@@ -13,6 +13,8 @@ import type {
   SpreadsheetData,
   SelectedRange,
   ContextMenuState,
+  ColumnWidths,
+  RowHeights,
 } from '@features/spreadsheet/types';
 
 import { Cell } from './Cell';
@@ -21,10 +23,18 @@ import { SpreadsheetContextMenu } from './SpreadsheetContextMenu';
 
 import './Spreadsheet.css';
 
+const DEFAULT_COLUMN_WIDTH = 120;
+const MIN_COLUMN_WIDTH = 30;
+
+const DEFAULT_ROW_HEIGHT = 24;
+const MIN_ROW_HEIGHT = 20;
+
 export function Spreadsheet() {
   const [cells, setCells] = useState<SpreadsheetData>({});
   const [rowsCount, setRowsCount] = useState(DEFAULT_ROWS_COUNT);
   const [columnsCount, setColumnsCount] = useState(DEFAULT_COLUMNS_COUNT);
+  const [columnWidths, setColumnWidths] = useState<ColumnWidths>({});
+  const [rowHeights, setRowHeights] = useState<RowHeights>({});
   const [activeCell, setActiveCell] = useState<ActiveCell>({
     rowIndex: 0,
     columnIndex: 0,
@@ -102,6 +112,61 @@ export function Spreadsheet() {
       setSelectedRange(null);
       setEditingCellId(null);
     }
+  }
+
+  function handleColumnResizeStart(
+    event: React.MouseEvent<HTMLDivElement>,
+    columnIndex: number,
+  ): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const startX = event.clientX;
+    const startWidth = columnWidths[columnIndex] ?? DEFAULT_COLUMN_WIDTH;
+
+    function handleMouseMove(mouseMoveEvent: MouseEvent): void {
+      const deltaX = mouseMoveEvent.clientX - startX;
+      const newWidth = Math.max(MIN_COLUMN_WIDTH, startWidth + deltaX);
+
+      setColumnWidths((currentColumnWidths) => ({
+        ...currentColumnWidths,
+        [columnIndex]: newWidth,
+      }));
+    }
+
+    function handleMouseUp(): void {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }
+
+  function handleRowResizeStart(event: React.MouseEvent<HTMLDivElement>, rowIndex: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const startY = event.clientY;
+    const startHeight = rowHeights[rowIndex] ?? DEFAULT_ROW_HEIGHT;
+
+    function handleMouseMove(mouseMoveEvent: MouseEvent): void {
+      const deltaY = mouseMoveEvent.clientY - startY;
+      const newHeight = Math.max(MIN_ROW_HEIGHT, startHeight + deltaY);
+
+      setRowHeights((currentRowHeights) => ({
+        ...currentRowHeights,
+        [rowIndex]: newHeight,
+      }));
+    }
+
+    function handleMouseUp(): void {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   }
 
   function addRow(rowIndex: number): void {
@@ -250,23 +315,52 @@ export function Spreadsheet() {
             <tr>
               <th className="spreadsheet_corner" />
 
-              {columns.map((columnIndex) => (
-                <th key={columnIndex} className="spreadsheet_column_header">
-                  {getColumnName(columnIndex)}
-                </th>
-              ))}
+              {columns.map((columnIndex) => {
+                const columnWidth = columnWidths[columnIndex] ?? DEFAULT_COLUMN_WIDTH;
+
+                return (
+                  <th
+                    key={columnIndex}
+                    className="spreadsheet_column_header"
+                    style={{
+                      width: columnWidth,
+                      minWidth: columnWidth,
+                    }}
+                  >
+                    {getColumnName(columnIndex)}
+
+                    <div
+                      className="spreadsheet_column_resizer"
+                      onMouseDown={(event) => handleColumnResizeStart(event, columnIndex)}
+                    />
+                  </th>
+                );
+              })}
             </tr>
           </thead>
 
           <tbody>
             {rows.map((rowIndex) => (
               <tr key={rowIndex}>
-                <th className="spreadsheet_row_header">{rowIndex + 1}</th>
+                <th
+                  className="spreadsheet_row_header"
+                  style={{
+                    height: rowHeights[rowIndex] ?? DEFAULT_ROW_HEIGHT,
+                  }}
+                >
+                  {rowIndex + 1}
 
+                  <div
+                    className="spreadsheet_row_resizer"
+                    onMouseDown={(event) => handleRowResizeStart(event, rowIndex)}
+                  />
+                </th>
                 {columns.map((columnIndex) => {
                   const cellId = getCellId(rowIndex, columnIndex);
                   const rawValue = cells[cellId]?.raw ?? '';
                   const displayValue = getCellDisplayValue(cells, rawValue);
+                  const columnWidth = columnWidths[columnIndex] ?? DEFAULT_COLUMN_WIDTH;
+                  const rowHeight = rowHeights[rowIndex] ?? DEFAULT_ROW_HEIGHT;
                   const isActive =
                     activeCell.rowIndex === rowIndex && activeCell.columnIndex === columnIndex;
                   const position = {
@@ -280,6 +374,8 @@ export function Spreadsheet() {
                       key={cellId}
                       value={displayValue}
                       rawValue={rawValue}
+                      width={columnWidth}
+                      height={rowHeight}
                       isActive={isActive}
                       isSelected={isSelected}
                       isEditing={editingCellId === cellId}

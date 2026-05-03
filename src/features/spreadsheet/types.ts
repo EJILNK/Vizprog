@@ -22,3 +22,7 @@ export type ContextMenuState = {
   rowIndex: number;
   columnIndex: number;
 } | null;
+
+export type ColumnWidths = Record<number, number>;
+
+export type RowHeights = Record<number, number>;
