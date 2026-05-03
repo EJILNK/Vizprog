@@ -1,14 +1,16 @@
-import { memo, useEffect, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 
 type CellProps = {
   value: string;
   rawValue: string;
   isActive: boolean;
   isEditing: boolean;
-  onSelect: () => void;
+  isSelected: boolean;
+  onSelect: (event: React.MouseEvent<HTMLTableCellElement>) => void;
   onStartEdit: () => void;
   onStopEdit: () => void;
   onChange: (value: string) => void;
+  onContexMenu: (event: React.MouseEvent<HTMLTableCellElement>) => void;
 };
 
 export const Cell = memo(function Cell({
@@ -16,10 +18,12 @@ export const Cell = memo(function Cell({
   rawValue,
   isActive,
   isEditing,
+  isSelected,
   onSelect,
   onStartEdit,
   onStopEdit,
   onChange,
+  onContexMenu,
 }: CellProps) {
   const [localValue, setLocalValue] = useState(rawValue);
 
@@ -58,11 +62,22 @@ export const Cell = memo(function Cell({
     );
   }
 
+  const className = ['cell'];
+
+  if (isSelected) {
+    className.push('cell_selected');
+  }
+
+  if (isActive) {
+    className.push('cell_active');
+  }
+
   return (
     <td
-      className={isActive ? 'cell cell_active' : 'cell'}
+      className={className.join(' ')}
       onClick={onSelect}
       onDoubleClick={onStartEdit}
+      onContextMenu={onContexMenu}
     >
       {value}
     </td>

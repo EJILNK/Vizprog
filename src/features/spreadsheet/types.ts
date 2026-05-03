@@ -10,3 +10,15 @@ export type ActiveCell = {
   rowIndex: number;
   columnIndex: number;
 };
+
+export type SelectedRange = {
+  start: ActiveCell;
+  end: ActiveCell;
+};
+
+export type ContextMenuState = {
+  x: number;
+  y: number;
+  rowIndex: number;
+  columnIndex: number;
+} | null;
