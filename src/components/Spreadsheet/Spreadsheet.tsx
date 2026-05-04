@@ -1,12 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
-import {
-  DEFAULT_COLUMNS_COUNT,
-  DEFAULT_ROWS_COUNT,
-  getCellId,
-  getColumnName,
-  isCellInRange,
-} from '@features/spreadsheet/cellUtils';
+import { getCellId, getColumnName, isCellInRange } from '@features/spreadsheet/cellUtils';
 import { getCellDisplayValue } from '@features/spreadsheet/formuls';
 import type {
   ActiveCell,
@@ -16,6 +10,9 @@ import type {
   ColumnWidths,
   RowHeights,
 } from '@features/spreadsheet/types';
+
+import { docs } from '@features/Docs/docs';
+import type { SpreadsheetDocument } from '@features/Docs/doctypes';
 
 import { Cell } from './Cell';
 import { FormulBar } from './FormulBar';
@@ -29,10 +26,15 @@ const MIN_COLUMN_WIDTH = 30;
 const DEFAULT_ROW_HEIGHT = 24;
 const MIN_ROW_HEIGHT = 20;
 
-export function Spreadsheet() {
-  const [cells, setCells] = useState<SpreadsheetData>({});
-  const [rowsCount, setRowsCount] = useState(DEFAULT_ROWS_COUNT);
-  const [columnsCount, setColumnsCount] = useState(DEFAULT_COLUMNS_COUNT);
+type SpreadsheetProps = {
+  document: SpreadsheetDocument;
+  onDocumentChange: (document: SpreadsheetDocument) => void;
+};
+
+export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
+  const [cells, setCells] = useState<SpreadsheetData>(document.cells);
+  const [rowsCount, setRowsCount] = useState(document.rowsCount);
+  const [columnsCount, setColumnsCount] = useState(document.columnsCount);
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>({});
   const [rowHeights, setRowHeights] = useState<RowHeights>({});
   const [activeCell, setActiveCell] = useState<ActiveCell>({
@@ -42,6 +44,9 @@ export function Spreadsheet() {
   const [selectedRange, setSelectedRange] = useState<SelectedRange | null>(null);
   const [editingCellId, setEditingCellId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
+
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const columns = useMemo(() => {
     return Array.from({ length: columnsCount }, (_, index) => index);
@@ -55,6 +60,8 @@ export function Spreadsheet() {
   const activeRawValue = cells[activeCellId]?.raw ?? '';
 
   function updateCell(cellId: string, value: string): void {
+    setHasUnsavedChanges(true);
+
     setCells((currentCells) => ({
       ...currentCells,
       [cellId]: {
@@ -111,6 +118,12 @@ export function Spreadsheet() {
       setContextMenu(null);
       setSelectedRange(null);
       setEditingCellId(null);
+    }
+
+    if (event.ctrlKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      saveDocument();
+      return;
     }
   }
 
@@ -170,6 +183,7 @@ export function Spreadsheet() {
   }
 
   function addRow(rowIndex: number): void {
+    setHasUnsavedChanges(true);
     const newCells: SpreadsheetData = {};
 
     Object.entries(cells).forEach(([cellId, cell]) => {
@@ -201,6 +215,7 @@ export function Spreadsheet() {
       return;
     }
 
+    setHasUnsavedChanges(true);
     const newCells: SpreadsheetData = {};
 
     Object.entries(cells).forEach(([cellId, cell]) => {
@@ -235,6 +250,7 @@ export function Spreadsheet() {
   }
 
   function addColumn(columnIndex: number): void {
+    setHasUnsavedChanges(true);
     const newCells: SpreadsheetData = {};
 
     Object.entries(cells).forEach(([cellId, cell]) => {
@@ -267,6 +283,7 @@ export function Spreadsheet() {
       return;
     }
 
+    setHasUnsavedChanges(true);
     const newCells: SpreadsheetData = {};
 
     Object.entries(cells).forEach(([cellId, cell]) => {
@@ -301,8 +318,64 @@ export function Spreadsheet() {
     }));
   }
 
+  function saveDocument(): void {
+    setSaveStatus('saving');
+
+    const updatedDocument = docs.updateDocument(document.id, {
+      cells,
+      rowsCount,
+      columnsCount,
+    });
+
+    if (!updatedDocument) {
+      setSaveStatus('error');
+      return;
+    }
+
+    setSaveStatus('saved');
+    setHasUnsavedChanges(false);
+    onDocumentChange(updatedDocument);
+  }
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      return;
+    }
+
+    setSaveStatus('saving');
+
+    const timeoutId = window.setTimeout(() => {
+      saveDocument();
+    }, 500);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [cells, rowsCount, columnsCount, hasUnsavedChanges]);
+
+  useEffect(() => {
+    function handleBeforeUnload(event: BeforeUnloadEvent): void {
+      if (!hasUnsavedChanges) {
+        return;
+      }
+
+      event.preventDefault();
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
   return (
     <div className="spreadsheet" tabIndex={0} onKeyDown={handleKeyDown}>
+      <div className="spreadsheet_save_status">
+        {saveStatus === 'saved' && 'Сохранено'}
+        {saveStatus === 'saving' && 'Сохранение...'}
+        {saveStatus === 'error' && 'Ошибка сохранения'}
+      </div>
       <FormulBar
         activeCellId={activeCellId}
         value={activeRawValue}

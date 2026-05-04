@@ -148,3 +148,9 @@
 .spreadsheet_row_resizer:hover {
   background: rgb(59 130 246 / 25%);
 }
+
+.spreadsheet_save_status {
+  margin-bottom: 8px;
+  color: #3ac21f;
+  font-size: 14px;
+}

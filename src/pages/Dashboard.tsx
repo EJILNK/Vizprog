@@ -1,4 +1,5 @@
 import type { SpreadsheetDocument } from '@features/Docs/doctypes';
+import { getDocumentPreview } from '@features/Docs/doscpreview';
 
 type DashboardPageProps = {
   documents: SpreadsheetDocument[];
@@ -31,52 +32,68 @@ export function DashboardPage({
         <p className="dashboard_empty">Документов пока нет.</p>
       ) : (
         <div className="documents_list">
-          {documents.map((document) => (
-            <article key={document.id} className="document_card">
-              <input
-                className="document_title_input"
-                value={document.title}
-                onChange={(event) => onRenameDocument(document.id, event.target.value)}
-              />
+          {documents.map((document) => {
+            const preview = getDocumentPreview(document);
 
-              <div className="document_info">
-                <p>Создан: {new Date(document.createdAt).toLocaleString()}</p>
-                <p>Изменён: {new Date(document.updatedAt).toLocaleString()}</p>
-                <p>
-                  Размер: {document.rowsCount} × {document.columnsCount}
-                </p>
-              </div>
+            return (
+              <article key={document.id} className="document_card">
+                <input
+                  className="document_title_input"
+                  value={document.title}
+                  onChange={(event) => onRenameDocument(document.id, event.target.value)}
+                />
 
-              <div className="document_actions">
-                <div className="open_button">
-                  <button type="button" onClick={() => onOpenDocument(document.id)}>
-                    Открыть
-                  </button>
+                <div className="document_info">
+                  <p>Создан: {new Date(document.createdAt).toLocaleString()}</p>
+                  <p>Изменён: {new Date(document.updatedAt).toLocaleString()}</p>
+                  <p>
+                    Размер: {document.rowsCount} × {document.columnsCount}
+                  </p>
                 </div>
 
-                <div className="duplicate_button">
-                  <button type="button" onClick={() => onDuplicateDocument(document.id)}>
-                    Дублировать
-                  </button>
+                <div className="document_preview">
+                  {preview.map((row, rowIndex) => (
+                    <div key={rowIndex} className="document_preview_row">
+                      {row.map((value, columnIndex) => (
+                        <div key={columnIndex} className="document_preview_cell">
+                          {value}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
 
-                <div className="delete_button">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const isConfirmed = window.confirm('Удалить документ?');
+                <div className="document_actions">
+                  <div className="open_button">
+                    <button type="button" onClick={() => onOpenDocument(document.id)}>
+                      Открыть
+                    </button>
+                  </div>
 
-                      if (isConfirmed) {
-                        onDeleteDocument(document.id);
-                      }
-                    }}
-                  >
-                    Удалить
-                  </button>
+                  <div className="duplicate_button">
+                    <button type="button" onClick={() => onDuplicateDocument(document.id)}>
+                      Дублировать
+                    </button>
+                  </div>
+
+                  <div className="delete_button">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const isConfirmed = window.confirm('Удалить документ?');
+
+                        if (isConfirmed) {
+                          onDeleteDocument(document.id);
+                        }
+                      }}
+                    >
+                      Удалить
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
     </div>
