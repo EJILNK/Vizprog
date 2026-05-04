@@ -18,6 +18,9 @@ import { Cell } from './Cell';
 import { FormulBar } from './FormulBar';
 import { SpreadsheetContextMenu } from './SpreadsheetContextMenu';
 
+import { downloadFile } from '@utils/download';
+import { createCsvFromCells, parseCsvToCells } from '@utils/csvparse';
+
 import './Spreadsheet.css';
 
 const DEFAULT_COLUMN_WIDTH = 120;
@@ -337,6 +340,55 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
     onDocumentChange(updatedDocument);
   }
 
+  function exportJson(): void {
+    const documentForExport = {
+      ...document,
+      cells,
+      rowsCount,
+      columnsCount,
+      updatedAt: new Date().toISOString(),
+    };
+
+    downloadFile(
+      `${document.title}.json`,
+      JSON.stringify(documentForExport, null, 2),
+      'application/json',
+    );
+  }
+
+  function exportCsv(): void {
+    const csv = createCsvFromCells(cells, rowsCount, columnsCount);
+
+    downloadFile(`${document.title}.csv`, csv, 'text/csv;charset=utf-8');
+  }
+
+  function importCsv(file: File): void {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const text = String(reader.result);
+      const importedTable = parseCsvToCells(text);
+
+      setCells(importedTable.cells);
+      setRowsCount(importedTable.rowsCount);
+      setColumnsCount(importedTable.columnsCount);
+      setHasUnsavedChanges(true);
+    };
+
+    reader.readAsText(file);
+  }
+
+  function handleImportCsv(event: React.ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    importCsv(file);
+    event.target.value = '';
+  }
+
   useEffect(() => {
     if (!hasUnsavedChanges) {
       return;
@@ -376,6 +428,22 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
         {saveStatus === 'saving' && 'Сохранение...'}
         {saveStatus === 'error' && 'Ошибка сохранения'}
       </div>
+
+      <div className="spreadsheet_export_panel">
+        <button type="button" onClick={exportJson}>
+          Экспорт JSON
+        </button>
+
+        <button type="button" onClick={exportCsv}>
+          Экспорт CSV
+        </button>
+
+        <label className="spreadsheet_import_button">
+          Импорт CSV
+          <input type="file" accept=".csv,text/csv" onChange={handleImportCsv} />
+        </label>
+      </div>
+
       <FormulBar
         activeCellId={activeCellId}
         value={activeRawValue}
