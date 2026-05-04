@@ -1,1 +1,1 @@
-export const USER_MOCK_ID = "User1";
+export const USER_MOCK_ID = 'User1';
