@@ -1,7 +1,42 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
+
+import { useAppSelector } from '@app/hooks';
 
 export function AppLayout() {
   const location = useLocation();
+
+  const { documentId } = useParams<{ documentId: string }>();
+
+  const documentTitle = useAppSelector((state) => {
+    if (!documentId) {
+      return null;
+    }
+
+    return state.documents.documents.find((document) => document.id === documentId)?.title ?? null;
+  });
+  function renderBreadcrumbs() {
+    if (location.pathname.startsWith('/documents/')) {
+      return (
+        <>
+          <Link to="/dashboard">Мои документы</Link>
+          <span> → </span>
+          <span>{documentTitle ?? 'Документ'}</span>
+        </>
+      );
+    }
+
+    if (location.pathname === '/profile') {
+      return (
+        <>
+          <Link to="/dashboard">Мои документы</Link>
+          <span> → </span>
+          <span>Профиль</span>
+        </>
+      );
+    }
+
+    return <span>Мои документы</span>;
+  }
 
   return (
     <div className="app_layout">
@@ -25,18 +60,7 @@ export function AppLayout() {
         </aside>
 
         <main className="app_main">
-          <div className="breadcrumbs">
-            {location.pathname.startsWith('/documents/') ? (
-              <>
-                <Link to="/dashboard">Мои документы</Link>
-                <span> → </span>
-                <span>Документ</span>
-              </>
-            ) : (
-              <span>Мои документы</span>
-            )}
-          </div>
-
+          <div className="breadcrumbs">{renderBreadcrumbs()}</div>
           <Outlet />
         </main>
       </div>

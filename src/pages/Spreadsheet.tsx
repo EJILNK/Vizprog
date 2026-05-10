@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { Spreadsheet } from '@components/Spreadsheet/Spreadsheet';
-import { loadDocuments, updateDocumentInState } from '@features/Docs/docsSlice';
+import { loadDocuments, updateDocumentInState, setActiveDocumentId } from '@features/Docs/docsSlice';
 import type { SpreadsheetDocument } from '@features/Docs/doctypes';
 
 export function SpreadsheetPage() {
@@ -13,11 +13,21 @@ export function SpreadsheetPage() {
   const documents = useAppSelector((state) => state.documents.documents);
   const isLoading = useAppSelector((state) => state.documents.isLoading);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (documents.length === 0) {
       void dispatch(loadDocuments());
     }
   }, [dispatch, documents.length]);
+
+  useEffect(()=> {
+    if(!documentId){
+        return;
+    }
+
+    dispatch(setActiveDocumentId(documentId));
+  }, [dispatch, documentId]);
 
   if (!documentId) {
     return <Navigate to="/dashboard" replace />;
@@ -45,5 +55,17 @@ export function SpreadsheetPage() {
     );
   }
 
-  return <Spreadsheet document={activeDocument} onDocumentChange={handleDocumentChange} />;
+  return (
+  <div>
+    <div className="document_top_bar">
+      <button type="button" onClick={() => navigate('/dashboard')}>
+        ← Назад к документам
+      </button>
+
+      <strong>{activeDocument.title}</strong>
+    </div>
+
+    <Spreadsheet document={activeDocument} onDocumentChange={handleDocumentChange} />
+  </div>
+);
 }
