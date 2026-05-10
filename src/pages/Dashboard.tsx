@@ -1,29 +1,90 @@
-import type { SpreadsheetDocument } from '@features/Docs/doctypes';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { getDocumentPreview } from '@features/Docs/doscpreview';
+import {
+  createDocumentThunk,
+  deleteDocumentThunk,
+  duplicateDocumentThunk,
+  loadDocuments,
+  updateDocumentThunk,
+} from '@features/Docs/docsSlice';
 
-type DashboardPageProps = {
-  documents: SpreadsheetDocument[];
-  onCreateDocument: () => void;
-  onOpenDocument: (documentId: string) => void;
-  onRenameDocument: (documentId: string, title: string) => void;
-  onDeleteDocument: (documentId: string) => void;
-  onDuplicateDocument: (documentId: string) => void;
-};
+export function DashboardPage() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
-export function DashboardPage({
-  documents,
-  onCreateDocument,
-  onOpenDocument,
-  onRenameDocument,
-  onDeleteDocument,
-  onDuplicateDocument,
-}: DashboardPageProps) {
+  const documents = useAppSelector((state) => state.documents.documents);
+
+  useEffect(() => {
+    void dispatch(loadDocuments());
+  }, [dispatch]);
+
+  function handleCreateDocument(): void {
+    const title = window.prompt('Название документа', 'Новая таблица');
+
+    if (!title) {
+      return;
+    }
+
+    const rowsText = window.prompt('Количество строк', '100');
+    const columnsText = window.prompt('Количество столбцов', '26');
+
+    const rowsCount = Number(rowsText);
+    const columnsCount = Number(columnsText);
+
+    if (
+      !Number.isInteger(rowsCount) ||
+      !Number.isInteger(columnsCount) ||
+      rowsCount <= 0 ||
+      columnsCount <= 0
+    ) {
+      window.alert('Размер таблицы должен быть положительным целым числом.');
+      return;
+    }
+
+    void dispatch(
+      createDocumentThunk({
+        title,
+        rowsCount,
+        columnsCount,
+      }),
+    )
+      .unwrap()
+      .then((createdDocument) => {
+        navigate(`/documents/${createdDocument.id}`);
+      });
+  }
+
+  function handleOpenDocument(documentId: string): void {
+    navigate(`/documents/${documentId}`);
+  }
+
+  function handleRenameDocument(documentId: string, title: string): void {
+    void dispatch(
+      updateDocumentThunk({
+        documentId,
+        data: {
+          title,
+        },
+      }),
+    );
+  }
+
+  function handleDeleteDocument(documentId: string): void {
+    void dispatch(deleteDocumentThunk(documentId));
+  }
+
+  function handleDuplicateDocument(documentId: string): void {
+    void dispatch(duplicateDocumentThunk(documentId));
+  }
   return (
     <div className="dashboard">
       <div className="dashboard_header">
         <h1>Мои документы</h1>
 
-        <button type="button" onClick={onCreateDocument}>
+        <button type="button" onClick={handleCreateDocument}>
           Создать документ
         </button>
       </div>
@@ -40,7 +101,7 @@ export function DashboardPage({
                 <input
                   className="document_title_input"
                   value={document.title}
-                  onChange={(event) => onRenameDocument(document.id, event.target.value)}
+                  onChange={(event) => handleRenameDocument(document.id, event.target.value)}
                 />
 
                 <div className="document_info">
@@ -65,13 +126,13 @@ export function DashboardPage({
 
                 <div className="document_actions">
                   <div className="open_button">
-                    <button type="button" onClick={() => onOpenDocument(document.id)}>
+                    <button type="button" onClick={() => handleOpenDocument(document.id)}>
                       Открыть
                     </button>
                   </div>
 
                   <div className="duplicate_button">
-                    <button type="button" onClick={() => onDuplicateDocument(document.id)}>
+                    <button type="button" onClick={() => handleDuplicateDocument(document.id)}>
                       Дублировать
                     </button>
                   </div>
@@ -83,7 +144,7 @@ export function DashboardPage({
                         const isConfirmed = window.confirm('Удалить документ?');
 
                         if (isConfirmed) {
-                          onDeleteDocument(document.id);
+                          handleDeleteDocument(document.id);
                         }
                       }}
                     >
