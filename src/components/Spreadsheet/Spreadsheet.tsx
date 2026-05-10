@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 
-import { setSaveStatus } from '@features/ui/uiSlice';
+import { setSaveStatus, setHasUnsavedChanges } from '@features/ui/uiSlice';
 
 import {
   redo,
@@ -65,7 +65,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
 
   const saveStatus = useAppSelector((state) => state.ui.saveStatus);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const hasUnsavedChanges = useAppSelector((state) => state.ui.hasUnsavedChanges);
 
   const columns = useMemo(() => {
     return Array.from({ length: columnsCount }, (_, index) => index);
@@ -89,7 +89,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   }, [dispatch, document.id]);
 
   function updateCell(cellId: string, value: string): void {
-    setHasUnsavedChanges(true);
+    dispatch(setHasUnsavedChanges(true));
 
     dispatch(
       setCell({
@@ -157,7 +157,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
     if (event.ctrlKey && event.key.toLowerCase() === 'z') {
       event.preventDefault();
       dispatch(undo());
-      setHasUnsavedChanges(true);
+      dispatch(setHasUnsavedChanges(true));
       return;
     }
 
@@ -167,7 +167,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
     ) {
       event.preventDefault();
       dispatch(redo());
-      setHasUnsavedChanges(true);
+      dispatch(setHasUnsavedChanges(true));
       return;
     }
   }
@@ -228,7 +228,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   }
 
   function addRow(rowIndex: number): void {
-    setHasUnsavedChanges(true);
+    dispatch(setHasUnsavedChanges(true));
     const newCells: SpreadsheetData = {};
 
     Object.entries(cells).forEach(([cellId, cell]) => {
@@ -260,7 +260,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       return;
     }
 
-    setHasUnsavedChanges(true);
+    dispatch(setHasUnsavedChanges(true));
     const newCells: SpreadsheetData = {};
 
     Object.entries(cells).forEach(([cellId, cell]) => {
@@ -295,7 +295,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   }
 
   function addColumn(columnIndex: number): void {
-    setHasUnsavedChanges(true);
+    dispatch(setHasUnsavedChanges(true));
     const newCells: SpreadsheetData = {};
 
     Object.entries(cells).forEach(([cellId, cell]) => {
@@ -328,7 +328,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       return;
     }
 
-    setHasUnsavedChanges(true);
+    dispatch(setHasUnsavedChanges(true));
     const newCells: SpreadsheetData = {};
 
     Object.entries(cells).forEach(([cellId, cell]) => {
@@ -379,7 +379,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       .unwrap()
       .then((updatedDocument) => {
         dispatch(setSaveStatus('saved'));
-        setHasUnsavedChanges(false);
+        dispatch(setHasUnsavedChanges(false));
         onDocumentChange(updatedDocument);
       })
       .catch(() => {
@@ -419,7 +419,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       dispatch(setCells(importedTable.cells));
       dispatch(setRowsCount(importedTable.rowsCount));
       dispatch(setColumnsCount(importedTable.columnsCount));
-      setHasUnsavedChanges(true);
+      dispatch(setHasUnsavedChanges(true));
     };
 
     reader.readAsText(file);
@@ -454,7 +454,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
 
   useEffect(() => {
     if (saveStatus === 'saved') {
-      setHasUnsavedChanges(false);
+      dispatch(setHasUnsavedChanges(false));
     }
   }, [saveStatus]);
 
