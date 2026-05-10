@@ -1,21 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@app/hooks';
+
+import {
+  createDocumentThunk,
+  deleteDocumentThunk,
+  duplicateDocumentThunk,
+  loadDocuments,
+  setActiveDocumentId,
+  updateDocumentInState,
+  updateDocumentThunk,
+} from '@features/Docs/docsSlice';
 
 import { Spreadsheet } from '@components/Spreadsheet/Spreadsheet';
-import { docs } from '@features/Docs/docs';
 import type { SpreadsheetDocument } from '@features/Docs/doctypes';
 import { DashboardPage } from '@pages/Dashboard';
 
 export default function App() {
-  const [documents, setDocuments] = useState<SpreadsheetDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+
+  const documents = useAppSelector((state) => state.documents.documents);
+  const activeDocumentId = useAppSelector((state) => state.documents.activeDocumentId);
 
   useEffect(() => {
-    setDocuments(docs.getDocuments());
-  }, []);
-
-  function refreshDocuments(): void {
-    setDocuments(docs.getDocuments());
-  }
+    void dispatch(loadDocuments());
+  }, [dispatch]);
 
   function handleCreateDocument(): void {
     const title = window.prompt('Название документа', 'Новая таблица');
@@ -40,49 +48,40 @@ export default function App() {
       return;
     }
 
-    const newDocument = docs.createDocument({
-      title,
-      rowsCount,
-      columnsCount,
-    });
-
-    refreshDocuments();
-    setActiveDocumentId(newDocument.id);
+    void dispatch(
+      createDocumentThunk({
+        title,
+        rowsCount,
+        columnsCount,
+      }),
+    );
   }
 
   function handleOpenDocument(documentId: string): void {
-    setActiveDocumentId(documentId);
+    dispatch(setActiveDocumentId(documentId));
   }
 
   function handleRenameDocument(documentId: string, title: string): void {
-    docs.updateDocument(documentId, {
-      title,
-    });
-
-    refreshDocuments();
+    void dispatch(
+      updateDocumentThunk({
+        documentId,
+        data: {
+          title,
+        },
+      }),
+    );
   }
 
   function handleDeleteDocument(documentId: string): void {
-    docs.deleteDocument(documentId);
-
-    if (activeDocumentId === documentId) {
-      setActiveDocumentId(null);
-    }
-
-    refreshDocuments();
+    void dispatch(deleteDocumentThunk(documentId));
   }
 
   function handleDuplicateDocument(documentId: string): void {
-    docs.duplicateDocument(documentId);
-    refreshDocuments();
+    void dispatch(duplicateDocumentThunk(documentId));
   }
 
   function handleDocumentChange(updatedDocument: SpreadsheetDocument): void {
-    setDocuments((currentDocuments) =>
-      currentDocuments.map((document) =>
-        document.id === updatedDocument.id ? updatedDocument : document,
-      ),
-    );
+    dispatch(updateDocumentInState(updatedDocument));
   }
 
   const activeDocument =
@@ -94,7 +93,7 @@ export default function App() {
     return (
       <div>
         <div className="document_top_bar">
-          <button type="button" onClick={() => setActiveDocumentId(null)}>
+          <button type="button" onClick={() => dispatch(setActiveDocumentId(null))}>
             ← Назад к документам
           </button>
 

@@ -1,5 +1,19 @@
 import React, { useMemo, useState, useEffect } from 'react';
 
+import { useAppDispatch, useAppSelector } from '@app/hooks';
+
+import { setSaveStatus } from '@features/ui/uiSlice';
+
+import {
+  redo,
+  setCell,
+  setCells,
+  setColumnsCount,
+  setRowsCount,
+  setSpreadsheet,
+  undo,
+} from '@features/spreadsheet/spreadsheetSlice';
+
 import { getCellId, getColumnName, isCellInRange } from '@features/spreadsheet/cellUtils';
 import { getCellDisplayValue } from '@features/spreadsheet/formuls';
 import type {
@@ -11,7 +25,7 @@ import type {
   RowHeights,
 } from '@features/spreadsheet/types';
 
-import { docs } from '@features/Docs/docs';
+import { updateDocumentThunk } from '@features/Docs/docsSlice';
 import type { SpreadsheetDocument } from '@features/Docs/doctypes';
 
 import { Cell } from './Cell';
@@ -35,9 +49,11 @@ type SpreadsheetProps = {
 };
 
 export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
-  const [cells, setCells] = useState<SpreadsheetData>(document.cells);
-  const [rowsCount, setRowsCount] = useState(document.rowsCount);
-  const [columnsCount, setColumnsCount] = useState(document.columnsCount);
+  const dispatch = useAppDispatch();
+
+  const cells = useAppSelector((state) => state.spreadsheet.cells);
+  const rowsCount = useAppSelector((state) => state.spreadsheet.rowsCount);
+  const columnsCount = useAppSelector((state) => state.spreadsheet.columnsCount);
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>({});
   const [rowHeights, setRowHeights] = useState<RowHeights>({});
   const [activeCell, setActiveCell] = useState<ActiveCell>({
@@ -48,7 +64,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   const [editingCellId, setEditingCellId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
 
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const saveStatus = useAppSelector((state) => state.ui.saveStatus);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const columns = useMemo(() => {
@@ -62,15 +78,25 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   const activeCellId = getCellId(activeCell.rowIndex, activeCell.columnIndex);
   const activeRawValue = cells[activeCellId]?.raw ?? '';
 
+  useEffect(() => {
+    dispatch(
+      setSpreadsheet({
+        cells: document.cells,
+        rowsCount: document.rowsCount,
+        columnsCount: document.columnsCount,
+      }),
+    );
+  }, [dispatch, document.id]);
+
   function updateCell(cellId: string, value: string): void {
     setHasUnsavedChanges(true);
 
-    setCells((currentCells) => ({
-      ...currentCells,
-      [cellId]: {
-        raw: value,
-      },
-    }));
+    dispatch(
+      setCell({
+        cellId,
+        value,
+      }),
+    );
   }
 
   function handleSelectCell(
@@ -126,6 +152,22 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
     if (event.ctrlKey && event.key.toLowerCase() === 's') {
       event.preventDefault();
       saveDocument();
+      return;
+    }
+    if (event.ctrlKey && event.key.toLowerCase() === 'z') {
+      event.preventDefault();
+      dispatch(undo());
+      setHasUnsavedChanges(true);
+      return;
+    }
+
+    if (
+      event.ctrlKey &&
+      (event.key.toLowerCase() === 'y' || (event.shiftKey && event.key.toLowerCase() === 'z'))
+    ) {
+      event.preventDefault();
+      dispatch(redo());
+      setHasUnsavedChanges(true);
       return;
     }
   }
@@ -208,8 +250,8 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       newCells[newCellId] = cell;
     });
 
-    setCells(newCells);
-    setRowsCount((currentRowsCount) => currentRowsCount + 1);
+    dispatch(setCells(newCells));
+    dispatch(setRowsCount(rowsCount + 1));
     setSelectedRange(null);
   }
 
@@ -242,8 +284,8 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       }
     });
 
-    setCells(newCells);
-    setRowsCount((currentRowsCount) => currentRowsCount - 1);
+    dispatch(setCells(newCells));
+    dispatch(setRowsCount(rowsCount - 1));
     setSelectedRange(null);
 
     setActiveCell((currentActiveCell) => ({
@@ -276,8 +318,8 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       newCells[newCellId] = cell;
     });
 
-    setCells(newCells);
-    setColumnsCount((currentColumnsCount) => currentColumnsCount + 1);
+    dispatch(setCells(newCells));
+    dispatch(setColumnsCount(columnsCount + 1));
     setSelectedRange(null);
   }
 
@@ -311,8 +353,8 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       }
     });
 
-    setCells(newCells);
-    setColumnsCount((currentColumnsCount) => currentColumnsCount - 1);
+    dispatch(setCells(newCells));
+    dispatch(setColumnsCount(columnsCount - 1));
     setSelectedRange(null);
 
     setActiveCell((currentActiveCell) => ({
@@ -322,22 +364,27 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   }
 
   function saveDocument(): void {
-    setSaveStatus('saving');
+    dispatch(setSaveStatus('saving'));
 
-    const updatedDocument = docs.updateDocument(document.id, {
-      cells,
-      rowsCount,
-      columnsCount,
-    });
-
-    if (!updatedDocument) {
-      setSaveStatus('error');
-      return;
-    }
-
-    setSaveStatus('saved');
-    setHasUnsavedChanges(false);
-    onDocumentChange(updatedDocument);
+    void dispatch(
+      updateDocumentThunk({
+        documentId: document.id,
+        data: {
+          cells,
+          rowsCount,
+          columnsCount,
+        },
+      }),
+    )
+      .unwrap()
+      .then((updatedDocument) => {
+        dispatch(setSaveStatus('saved'));
+        setHasUnsavedChanges(false);
+        onDocumentChange(updatedDocument);
+      })
+      .catch(() => {
+        dispatch(setSaveStatus('error'));
+      });
   }
 
   function exportJson(): void {
@@ -369,9 +416,9 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       const text = String(reader.result);
       const importedTable = parseCsvToCells(text);
 
-      setCells(importedTable.cells);
-      setRowsCount(importedTable.rowsCount);
-      setColumnsCount(importedTable.columnsCount);
+      dispatch(setCells(importedTable.cells));
+      dispatch(setRowsCount(importedTable.rowsCount));
+      dispatch(setColumnsCount(importedTable.columnsCount));
       setHasUnsavedChanges(true);
     };
 
@@ -390,22 +437,6 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   }
 
   useEffect(() => {
-    if (!hasUnsavedChanges) {
-      return;
-    }
-
-    setSaveStatus('saving');
-
-    const timeoutId = window.setTimeout(() => {
-      saveDocument();
-    }, 500);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [cells, rowsCount, columnsCount, hasUnsavedChanges]);
-
-  useEffect(() => {
     function handleBeforeUnload(event: BeforeUnloadEvent): void {
       if (!hasUnsavedChanges) {
         return;
@@ -420,6 +451,12 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (saveStatus === 'saved') {
+      setHasUnsavedChanges(false);
+    }
+  }, [saveStatus]);
 
   return (
     <div className="spreadsheet" tabIndex={0} onKeyDown={handleKeyDown}>
