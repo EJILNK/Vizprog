@@ -27,8 +27,8 @@ const uiSlice = createSlice({
     },
 
     setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
-  state.hasUnsavedChanges = action.payload;
-},
+      state.hasUnsavedChanges = action.payload;
+    },
   },
 });
 

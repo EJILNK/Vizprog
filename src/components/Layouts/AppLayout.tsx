@@ -8,7 +8,7 @@ export function AppLayout() {
   const location = useLocation();
 
   const dispatch = useAppDispatch();
-const hasUnsavedChanges = useAppSelector((state) => state.ui.hasUnsavedChanges);
+  const hasUnsavedChanges = useAppSelector((state) => state.ui.hasUnsavedChanges);
 
   const { documentId } = useParams<{ documentId: string }>();
 
@@ -21,27 +21,29 @@ const hasUnsavedChanges = useAppSelector((state) => state.ui.hasUnsavedChanges);
   });
 
   function handleNavigationClick(event: MouseEvent<HTMLAnchorElement>): void {
-  if (!hasUnsavedChanges) {
-    return;
+    if (!hasUnsavedChanges) {
+      return;
+    }
+
+    const shouldLeave = window.confirm(
+      'Есть несохранённые изменения. Вы точно хотите покинуть страницу?',
+    );
+
+    if (!shouldLeave) {
+      event.preventDefault();
+      return;
+    }
+
+    dispatch(setHasUnsavedChanges(false));
   }
-
-  const shouldLeave = window.confirm(
-    'Есть несохранённые изменения. Вы точно хотите покинуть страницу?',
-  );
-
-  if (!shouldLeave) {
-    event.preventDefault();
-    return;
-  }
-
-  dispatch(setHasUnsavedChanges(false));
-}
 
   function renderBreadcrumbs() {
     if (location.pathname.startsWith('/documents/')) {
       return (
         <>
-          <Link to="/dashboard" onClick={handleNavigationClick}>Мои документы</Link>
+          <Link to="/dashboard" onClick={handleNavigationClick}>
+            Мои документы
+          </Link>
           <span> → </span>
           <span>{documentTitle ?? 'Документ'}</span>
         </>
@@ -51,7 +53,9 @@ const hasUnsavedChanges = useAppSelector((state) => state.ui.hasUnsavedChanges);
     if (location.pathname === '/profile') {
       return (
         <>
-          <Link to="/dashboard" onClick={handleNavigationClick}>Мои документы</Link>
+          <Link to="/dashboard" onClick={handleNavigationClick}>
+            Мои документы
+          </Link>
           <span> → </span>
           <span>Профиль</span>
         </>
@@ -69,7 +73,9 @@ const hasUnsavedChanges = useAppSelector((state) => state.ui.hasUnsavedChanges);
         </Link>
 
         <nav className="app_nav">
-          <Link to="/dashboard" onClick={handleNavigationClick}>Документы</Link>
+          <Link to="/dashboard" onClick={handleNavigationClick}>
+            Документы
+          </Link>
           <Link to="/profile">Профиль</Link>
         </nav>
       </header>
@@ -78,8 +84,12 @@ const hasUnsavedChanges = useAppSelector((state) => state.ui.hasUnsavedChanges);
         <aside className="app_sidebar">
           <p>Навигация</p>
 
-          <Link to="/dashboard" onClick={handleNavigationClick}>Мои документы</Link>
-          <Link to="/profile" onClick={handleNavigationClick}>Профиль</Link>
+          <Link to="/dashboard" onClick={handleNavigationClick}>
+            Мои документы
+          </Link>
+          <Link to="/profile" onClick={handleNavigationClick}>
+            Профиль
+          </Link>
         </aside>
 
         <main className="app_main">

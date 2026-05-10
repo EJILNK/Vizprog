@@ -44,20 +44,20 @@ export function SpreadsheetPage() {
   const activeDocument = documents.find((document) => document.id === documentId);
 
   function handleBackToDashboard(): void {
-  if (hasUnsavedChanges) {
-    const shouldLeave = window.confirm(
-      'Есть несохранённые изменения. Вы точно хотите покинуть страницу?',
-    );
+    if (hasUnsavedChanges) {
+      const shouldLeave = window.confirm(
+        'Есть несохранённые изменения. Вы точно хотите покинуть страницу?',
+      );
 
-    if (!shouldLeave) {
-      return;
+      if (!shouldLeave) {
+        return;
+      }
+
+      dispatch(setHasUnsavedChanges(false));
     }
 
-    dispatch(setHasUnsavedChanges(false));
+    navigate('/dashboard');
   }
-
-  navigate('/dashboard');
-}
 
   function handleDocumentChange(updatedDocument: SpreadsheetDocument): void {
     dispatch(updateDocumentInState(updatedDocument));
