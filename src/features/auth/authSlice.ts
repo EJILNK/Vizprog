@@ -1,7 +1,5 @@
 import { createSlice, type PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 
-import { USER_MOCK_ID } from './mockauth';
-
 import type { AuthResponse, AuthUser, LoginData, RegisterData } from './types';
 
 import { authService } from './authService';
@@ -19,17 +17,12 @@ type SetAuthPayload = {
   accessToken: string;
 };
 
-const mockUser: AuthUser = {
-  id: USER_MOCK_ID,
-  name: 'Mock User',
-  email: 'mock@example.com',
-  registeredAt: new Date().toISOString(),
-};
+const savedAuthSession = authService.getStoredAuthSession();
 
 const initialState: AuthState = {
-  user: mockUser,
-  accessToken: 'mock-access-token',
-  isAuthenticated: true,
+  user: savedAuthSession?.user ?? null,
+  accessToken: savedAuthSession?.accessToken ?? null,
+  isAuthenticated: Boolean(savedAuthSession),
   isLoading: false,
   error: null,
 };

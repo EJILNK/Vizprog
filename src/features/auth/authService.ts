@@ -6,6 +6,7 @@ type StoredUser = AuthUser & {
 
 const USERS_STORAGE_KEY = 'spreadsheet_users';
 const REFRESH_TOKEN_STORAGE_KEY = 'spreadsheet_refresh_token';
+const AUTH_SESSION_STORAGE_KEY = 'spreadsheet_auth_session';
 
 function readUsers(): StoredUser[] {
   const rawUsers = localStorage.getItem(USERS_STORAGE_KEY);
@@ -41,20 +42,48 @@ function removeRefreshToken(): void {
   localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
 }
 
+function saveAuthSession(authResponse: AuthResponse): void {
+  localStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(authResponse));
+}
+
+function getAuthSession(): AuthResponse | null {
+  const rawSession = localStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+
+  if (!rawSession) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawSession) as AuthResponse;
+  } catch {
+    return null;
+  }
+}
+
+function removeAuthSession(): void {
+  localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+}
+
 function createAuthResponse(user: AuthUser): AuthResponse {
   const accessToken = createToken('access');
   const refreshToken = createToken('refresh');
 
-  saveRefreshToken(refreshToken);
-
-  return {
+  const authResponse: AuthResponse = {
     user,
     accessToken,
     refreshToken,
   };
+
+  saveRefreshToken(refreshToken);
+  saveAuthSession(authResponse);
+
+  return authResponse;
 }
 
 export const authService = {
+  getStoredAuthSession(): AuthResponse | null {
+    return getAuthSession();
+  },
   register(data: RegisterData): AuthResponse {
     const users = readUsers();
     const normalizedEmail = data.email.trim().toLowerCase();
@@ -111,5 +140,6 @@ export const authService = {
 
   logout(): void {
     removeRefreshToken();
+    removeAuthSession();
   },
 };

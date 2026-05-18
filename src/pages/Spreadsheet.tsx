@@ -7,6 +7,7 @@ import {
   loadDocuments,
   updateDocumentInState,
   setActiveDocumentId,
+  checkDocumentAccessThunk,
 } from '@features/Docs/docsSlice';
 import type { SpreadsheetDocument } from '@features/Docs/doctypes';
 
@@ -20,6 +21,7 @@ export function SpreadsheetPage() {
 
   const documents = useAppSelector((state) => state.documents.documents);
   const isLoading = useAppSelector((state) => state.documents.isLoading);
+  const documentsError = useAppSelector((state) => state.documents.error);
 
   const navigate = useNavigate();
 
@@ -36,6 +38,22 @@ export function SpreadsheetPage() {
 
     dispatch(setActiveDocumentId(documentId));
   }, [dispatch, documentId]);
+
+  useEffect(() => {
+    if (!documentId) {
+      return;
+    }
+
+    void dispatch(checkDocumentAccessThunk(documentId))
+      .unwrap()
+      .catch((error) => {
+        if (error === '403') {
+          navigate('/dashboard', {
+            replace: true,
+          });
+        }
+      });
+  }, [dispatch, documentId, navigate]);
 
   if (!documentId) {
     return <Navigate to="/dashboard" replace />;
@@ -65,6 +83,10 @@ export function SpreadsheetPage() {
 
   if (!activeDocument && isLoading) {
     return <div className="page">Загрузка документа</div>;
+  }
+
+  if (documentsError === '403') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (!activeDocument) {

@@ -1,7 +1,13 @@
-import { USER_MOCK_ID } from '@features/auth/mockauth';
 import type { CreateDocumentData, SpreadsheetDocument } from './doctypes';
 
 const STORAGE_KEY = 'spreadsheet_documents';
+
+export class DocumentAccessError extends Error {
+  constructor() {
+    super('403');
+    this.name = 'DocumentAccessError';
+  }
+}
 
 function readDocuments(): SpreadsheetDocument[] {
   const rawDocuments = localStorage.getItem(STORAGE_KEY);
@@ -26,21 +32,20 @@ function createId(): string {
 }
 
 export const docs = {
-  getDocuments(): SpreadsheetDocument[] {
-    return readDocuments().filter((document) => document.ownerId === USER_MOCK_ID);
+  getDocuments(userId: string): SpreadsheetDocument[] {
+    return readDocuments().filter((document) => document.ownerId === userId);
   },
 
-  getDocumentById(documentId: string): SpreadsheetDocument | null {
+  getDocumentById(documentId: string, userId: string): SpreadsheetDocument | null {
     const documents = readDocuments();
 
     return (
-      documents.find(
-        (document) => document.id === documentId && document.ownerId === USER_MOCK_ID,
-      ) ?? null
+      documents.find((document) => document.id === documentId && document.ownerId === userId) ??
+      null
     );
   },
 
-  createDocument(data: CreateDocumentData): SpreadsheetDocument {
+  createDocument(data: CreateDocumentData, userId: string): SpreadsheetDocument {
     const documents = readDocuments();
     const now = new Date().toISOString();
 
@@ -52,7 +57,7 @@ export const docs = {
       cells: {},
       createdAt: now,
       updatedAt: now,
-      ownerId: USER_MOCK_ID,
+      ownerId: userId,
     };
 
     saveDocuments([...documents, newDocument]);
@@ -62,13 +67,14 @@ export const docs = {
 
   updateDocument(
     documentId: string,
+    userId: string,
     data: Partial<Omit<SpreadsheetDocument, 'id' | 'createdAt' | 'ownerId'>>,
   ): SpreadsheetDocument | null {
     const documents = readDocuments();
     let updatedDocument: SpreadsheetDocument | null = null;
 
     const updatedDocuments = documents.map((document) => {
-      if (document.id !== documentId || document.ownerId !== USER_MOCK_ID) {
+      if (document.id !== documentId || document.ownerId !== userId) {
         return document;
       }
 
@@ -86,18 +92,18 @@ export const docs = {
     return updatedDocument;
   },
 
-  deleteDocument(documentId: string): void {
+  deleteDocument(documentId: string, userId: string): void {
     const documents = readDocuments();
 
     const filteredDocuments = documents.filter((document) => {
-      return !(document.id === documentId && document.ownerId === USER_MOCK_ID);
+      return !(document.id === documentId && document.ownerId === userId);
     });
 
     saveDocuments(filteredDocuments);
   },
 
-  duplicateDocument(documentId: string): SpreadsheetDocument | null {
-    const document = this.getDocumentById(documentId);
+  duplicateDocument(documentId: string, userId: string): SpreadsheetDocument | null {
+    const document = this.getDocumentById(documentId, userId);
 
     if (!document) {
       return null;
@@ -117,5 +123,20 @@ export const docs = {
     saveDocuments([...documents, duplicatedDocument]);
 
     return duplicatedDocument;
+  },
+
+  checkDocumentAccess(documentId: string, userId: string): SpreadsheetDocument {
+    const documents = readDocuments();
+    const document = documents.find((item) => item.id === documentId);
+
+    if (!document) {
+      throw new Error('Документ не найден');
+    }
+
+    if (document.ownerId !== userId) {
+      throw new DocumentAccessError();
+    }
+
+    return document;
   },
 };

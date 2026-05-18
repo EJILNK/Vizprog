@@ -4,6 +4,7 @@ import type { MouseEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { setHasUnsavedChanges } from '@features/ui/uiSlice';
 import { logoutThunk } from '@features/auth/authSlice';
+import { setActiveDocumentId, setDocuments } from '@features/Docs/docsSlice';
 
 export function AppLayout() {
   const navigate = useNavigate();
@@ -71,6 +72,8 @@ export function AppLayout() {
 
   function handleLogout(): void {
     void dispatch(logoutThunk()).then(() => {
+      dispatch(setDocuments([]));
+      dispatch(setActiveDocumentId(null));
       navigate('/login', {
         replace: true,
       });
