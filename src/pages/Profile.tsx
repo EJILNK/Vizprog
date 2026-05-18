@@ -4,6 +4,15 @@ export function ProfilePage() {
   const user = useAppSelector((state) => state.auth.user);
   const documentsCount = useAppSelector((state) => state.documents.documents.length);
 
+  if (!user) {
+    return (
+      <div className="page">
+        <h1>Профиль</h1>
+        <p>Пользователь не авторизован.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
       <h1>Профиль</h1>
