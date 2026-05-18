@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { authReducer, logout, setAuth, updateUserName } from './authSlice';
+import { authReducer, loginThunk, logout, setAuth, updateUserName } from './authSlice';
 import { USER_MOCK_ID } from './mockauth';
 
 describe('authSlice', () => {
@@ -45,5 +45,32 @@ describe('authSlice', () => {
     const state = authReducer(undefined, updateUserName('Новое имя'));
 
     expect(state.user?.name).toBe('Новое имя');
+  });
+
+  it('handles login fulfilled', () => {
+    const state = authReducer(
+      undefined,
+      loginThunk.fulfilled(
+        {
+          user: {
+            id: 'user-3',
+            name: 'Login User',
+            email: 'login@example.com',
+            registeredAt: '2026-01-01T00:00:00.000Z',
+          },
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+        },
+        'request-id',
+        {
+          email: 'login@example.com',
+          password: 'password123',
+        },
+      ),
+    );
+
+    expect(state.isAuthenticated).toBe(true);
+    expect(state.user?.email).toBe('login@example.com');
+    expect(state.accessToken).toBe('access-token');
   });
 });

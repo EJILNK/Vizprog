@@ -1,10 +1,14 @@
-import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
+import { Link, Outlet, useLocation, useParams, useNavigate } from 'react-router-dom';
 import type { MouseEvent } from 'react';
 
 import { useAppDispatch, useAppSelector } from '@app/hooks';
 import { setHasUnsavedChanges } from '@features/ui/uiSlice';
+import { logoutThunk } from '@features/auth/authSlice';
 
 export function AppLayout() {
+  const navigate = useNavigate();
+  const user = useAppSelector((state) => state.auth.user);
+
   const location = useLocation();
 
   const dispatch = useAppDispatch();
@@ -65,6 +69,14 @@ export function AppLayout() {
     return <span>Мои документы</span>;
   }
 
+  function handleLogout(): void {
+    void dispatch(logoutThunk()).then(() => {
+      navigate('/login', {
+        replace: true,
+      });
+    });
+  }
+
   return (
     <div className="app_layout">
       <header className="app_header">
@@ -78,6 +90,14 @@ export function AppLayout() {
           </Link>
           <Link to="/profile">Профиль</Link>
         </nav>
+
+        <div className="app_user">
+          <span>{user?.email}</span>
+
+          <button type="button" onClick={handleLogout}>
+            Выйти
+          </button>
+        </div>
       </header>
 
       <div className="app_body">

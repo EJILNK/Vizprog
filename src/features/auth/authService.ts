@@ -85,7 +85,9 @@ export const authService = {
     const normalizedEmail = data.email.trim().toLowerCase();
 
     const user = users.find((storedUser) => {
-      return storedUser.email.toLowerCase() === normalizedEmail && storedUser.password === data.password;
+      return (
+        storedUser.email.toLowerCase() === normalizedEmail && storedUser.password === data.password
+      );
     });
 
     if (!user) {
