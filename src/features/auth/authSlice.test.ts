@@ -1,17 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import { authReducer, loginThunk, logout, setAuth, updateUserName } from './authSlice';
-import { USER_MOCK_ID } from './mockauth';
 
 describe('authSlice', () => {
-  it('has mock authenticated user by default', () => {
+  it('is not authenticated by default', () => {
     const state = authReducer(undefined, {
       type: 'unknown',
     });
 
-    expect(state.isAuthenticated).toBe(true);
-    expect(state.user?.id).toBe(USER_MOCK_ID);
-    expect(state.user?.email).toBe('mock@example.com');
+    expect(state.isAuthenticated).toBe(false);
+    expect(state.user).toBeNull();
+    expect(state.accessToken).toBeNull();
   });
 
   it('sets auth user and token', () => {
@@ -42,7 +41,20 @@ describe('authSlice', () => {
   });
 
   it('updates user name', () => {
-    const state = authReducer(undefined, updateUserName('Новое имя'));
+    let state = authReducer(
+      undefined,
+      setAuth({
+        user: {
+          id: 'user-1',
+          name: 'Старое имя',
+          email: 'user@example.com',
+          registeredAt: '2026-01-01T00:00:00.000Z',
+        },
+        accessToken: 'access-token',
+      }),
+    );
+
+    state = authReducer(state, updateUserName('Новое имя'));
 
     expect(state.user?.name).toBe('Новое имя');
   });
