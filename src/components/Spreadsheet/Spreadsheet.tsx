@@ -16,12 +16,13 @@ import {
 } from '@features/spreadsheet/spreadsheetSlice';
 
 import { getCellId, getColumnName, isCellInRange } from '@features/spreadsheet/cellUtils';
-import { getCellDisplayValue } from '@features/spreadsheet/formuls';
+import { getCellDisplayValue, formatCellDisplayValue } from '@features/spreadsheet/formuls';
 import type {
   ActiveCell,
   SpreadsheetData,
   SelectedRange,
   CellFormat,
+  NumberFormat,
   ContextMenuState,
   ColumnWidths,
   RowHeights,
@@ -130,6 +131,30 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   function toggleUnderline(): void {
     updateActiveCellFormat({
       isUnderline: !activeCellFormat?.isUnderline,
+    });
+  }
+
+  function changeTextColor(color: string): void {
+    updateActiveCellFormat({
+      textColor: color,
+    });
+  }
+
+  function changeBackgroundColor(color: string): void {
+    updateActiveCellFormat({
+      backgroundColor: color,
+    });
+  }
+
+  function changeTextAlign(align: 'left' | 'center' | 'right'): void {
+    updateActiveCellFormat({
+      textAlign: align,
+    });
+  }
+
+  function changeNumberFormat(format: NumberFormat): void {
+    updateActiveCellFormat({
+      numberFormat: format,
     });
   }
 
@@ -520,6 +545,10 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
         onToggleBold={toggleBold}
         onToggleItalic={toggleItalic}
         onToggleUnderline={toggleUnderline}
+        onTextColorChange={changeTextColor}
+        onBackgroundColorChange={changeBackgroundColor}
+        onTextAlignChange={changeTextAlign}
+        onNumberFormatChange={changeNumberFormat}
       />
 
       <FormulBar
@@ -577,8 +606,12 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
                 {columns.map((columnIndex) => {
                   const cellId = getCellId(rowIndex, columnIndex);
                   const rawValue = cells[cellId]?.raw ?? '';
-                  const displayValue = getCellDisplayValue(cells, rawValue);
+                  const calculatedValue = getCellDisplayValue(cells, rawValue);
                   const cellFormat = cells[cellId]?.format;
+                  const displayValue = formatCellDisplayValue(
+                    calculatedValue,
+                    cellFormat?.numberFormat,
+                  );
                   const columnWidth = columnWidths[columnIndex] ?? DEFAULT_COLUMN_WIDTH;
                   const rowHeight = rowHeights[rowIndex] ?? DEFAULT_ROW_HEIGHT;
                   const isActive =

@@ -177,6 +177,8 @@
 
 .format_bar {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   margin-bottom: 8px;
 }
@@ -193,4 +195,39 @@
 .format_bar_button.active {
   background: #0a67e0;
   border-color: #2476e2;
+}
+
+.format_bar_color {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid #c8c8c8;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+.format_bar_color input {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.format_bar_select {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid #c8c8c8;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+.format_bar_select select {
+  padding: 4px;
+  border: 1px solid #c8c8c8;
+  background: #ffffff;
 }

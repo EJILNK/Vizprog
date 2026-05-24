@@ -1,5 +1,6 @@
 import type { SpreadsheetData } from './types';
 import { getCellId, getCellPosition } from './cellUtils';
+import type { NumberFormat } from './types';
 
 function getNumberFromCell(cells: SpreadsheetData, CellId: string): number {
   const cell = cells[CellId];
@@ -100,4 +101,26 @@ export function getCellDisplayValue(cells: SpreadsheetData, rawValue: string): s
   }
 
   return calculateExpression(cells, formula);
+}
+
+export function formatCellDisplayValue(value: string, numberFormat?: NumberFormat): string {
+  if (!numberFormat || numberFormat === 'default') {
+    return value;
+  }
+
+  const numberValue = Number(value);
+
+  if (Number.isNaN(numberValue)) {
+    return value;
+  }
+
+  if (numberFormat === 'percent') {
+    return `${numberValue}%`;
+  }
+
+  if (numberFormat === 'currency') {
+    return `${numberValue} ₽`;
+  }
+
+  return value;
 }
