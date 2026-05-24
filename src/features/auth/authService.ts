@@ -1,4 +1,4 @@
-import type { AuthResponse, AuthUser, LoginData, RegisterData } from './types';
+import type { AuthResponse, AuthUser, LoginData, RegisterData, ChangePasswordData } from './types';
 
 type StoredUser = AuthUser & {
   password: string;
@@ -104,7 +104,12 @@ export const authService = {
 
     saveUsers([...users, newUser]);
 
-    const { password: _password, ...userWithoutPassword } = newUser;
+    const userWithoutPassword: AuthUser = {
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      registeredAt: newUser.registeredAt,
+    };
 
     return createAuthResponse(userWithoutPassword);
   },
@@ -123,7 +128,12 @@ export const authService = {
       throw new Error('Неверные авторизационные данные');
     }
 
-    const { password: _password, ...userWithoutPassword } = user;
+    const userWithoutPassword: AuthUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      registeredAt: user.registeredAt,
+    };
 
     return createAuthResponse(userWithoutPassword);
   },
@@ -136,6 +146,37 @@ export const authService = {
     }
 
     return createToken('access');
+  },
+
+  changePassword(data: ChangePasswordData): void {
+    const users = readUsers();
+
+    const userIndex = users.findIndex((user) => user.id === data.userId);
+
+    if (userIndex === -1) {
+      throw new Error('Пользователь не найден.');
+    }
+
+    const user = users[userIndex];
+
+    if (user.password !== data.currentPassword) {
+      throw new Error('Текущий пароль введён неверно.');
+    }
+
+    if (data.newPassword.length < 8) {
+      throw new Error('Новый пароль должен быть не короче 8 символов.');
+    }
+
+    if (data.newPassword !== data.confirmNewPassword) {
+      throw new Error('Новые пароли не совпадают.');
+    }
+
+    users[userIndex] = {
+      ...user,
+      password: data.newPassword,
+    };
+
+    saveUsers(users);
   },
 
   logout(): void {

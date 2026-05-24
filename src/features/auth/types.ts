@@ -22,3 +22,10 @@ export type AuthResponse = {
   accessToken: string;
   refreshToken: string;
 };
+
+export type ChangePasswordData = {
+  userId: string;
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+};

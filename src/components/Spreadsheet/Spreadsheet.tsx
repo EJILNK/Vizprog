@@ -93,7 +93,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
         columnsCount: document.columnsCount,
       }),
     );
-  }, [dispatch, document.id]);
+  }, [dispatch, document.id, document.cells, document.rowsCount, document.columnsCount]);
 
   function updateCell(cellId: string, value: string): void {
     dispatch(setHasUnsavedChanges(true));
@@ -656,7 +656,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
     if (saveStatus === 'saved') {
       dispatch(setHasUnsavedChanges(false));
     }
-  }, [saveStatus]);
+  }, [dispatch, saveStatus]);
 
   return (
     <div className="spreadsheet" tabIndex={0} onKeyDown={handleKeyDown}>

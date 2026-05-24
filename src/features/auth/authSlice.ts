@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 
-import type { AuthResponse, AuthUser, LoginData, RegisterData } from './types';
+import type { AuthResponse, AuthUser, LoginData, RegisterData, ChangePasswordData } from './types';
 
 import { authService } from './authService';
 
@@ -109,6 +109,18 @@ const authSlice = createSlice({
         state.accessToken = null;
         state.isAuthenticated = false;
         state.error = null;
+      })
+      .addCase(changePasswordThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(changePasswordThunk.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(changePasswordThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message ?? 'Не удалось сменить пароль';
       });
   },
 });
@@ -138,3 +150,10 @@ export const refreshAccessTokenThunk = createAsyncThunk<string | null>(
 export const logoutThunk = createAsyncThunk('auth/logout', async () => {
   authService.logout();
 });
+
+export const changePasswordThunk = createAsyncThunk<void, ChangePasswordData>(
+  'auth/changePassword',
+  async (data) => {
+    authService.changePassword(data);
+  },
+);
