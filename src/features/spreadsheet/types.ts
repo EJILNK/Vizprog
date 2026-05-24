@@ -1,7 +1,22 @@
 export type CellId = string;
 
+export type TextAlign = 'left' | 'center' | 'right';
+
+export type NumberFormat = 'default' | 'percent' | 'currency';
+
+export type CellFormat = {
+  isBold?: boolean;
+  isItalic?: boolean;
+  isUnderline?: boolean;
+  textColor?: string;
+  backgroundColor?: string;
+  textAlign?: TextAlign;
+  numberFormat?: NumberFormat;
+};
+
 export type CellData = {
   raw: string;
+  format?: CellFormat;
 };
 
 export type SpreadsheetData = Record<CellId, CellData>;

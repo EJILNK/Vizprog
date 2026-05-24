@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import type { SpreadsheetData } from './types';
+import type { SpreadsheetData, CellFormat } from './types';
 
 type SpreadsheetState = {
   cells: SpreadsheetData;
@@ -19,6 +19,11 @@ type SetSpreadsheetPayload = {
   cells: SpreadsheetData;
   rowsCount: number;
   columnsCount: number;
+};
+
+type SetCellFormatPayload = {
+  cellId: string;
+  format: CellFormat;
 };
 
 const initialState: SpreadsheetState = {
@@ -90,10 +95,38 @@ const spreadsheetSlice = createSlice({
       state.cells = nextCells;
       state.future = state.future.slice(1);
     },
+
+    setCellFormat(state, action: PayloadAction<SetCellFormatPayload>) {
+      state.past.push(state.cells);
+      state.future = [];
+
+      const currentCell = state.cells[action.payload.cellId] ?? {
+        raw: '',
+      };
+
+      state.cells = {
+        ...state.cells,
+        [action.payload.cellId]: {
+          ...currentCell,
+          format: {
+            ...currentCell.format,
+            ...action.payload.format,
+          },
+        },
+      };
+    },
   },
 });
 
-export const { setSpreadsheet, setCell, setCells, setRowsCount, setColumnsCount, undo, redo } =
-  spreadsheetSlice.actions;
+export const {
+  setSpreadsheet,
+  setCell,
+  setCells,
+  setRowsCount,
+  setColumnsCount,
+  undo,
+  redo,
+  setCellFormat,
+} = spreadsheetSlice.actions;
 
 export const spreadsheetReducer = spreadsheetSlice.reducer;

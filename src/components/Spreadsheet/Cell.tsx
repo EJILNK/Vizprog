@@ -1,5 +1,7 @@
 import React, { memo, useEffect, useState } from 'react';
 
+import type { CellFormat } from '@features/spreadsheet/types';
+
 type CellProps = {
   value: string;
   rawValue: string;
@@ -8,6 +10,7 @@ type CellProps = {
   isActive: boolean;
   isEditing: boolean;
   isSelected: boolean;
+  format?: CellFormat;
   onSelect: (event: React.MouseEvent<HTMLTableCellElement>) => void;
   onStartEdit: () => void;
   onStopEdit: () => void;
@@ -23,6 +26,7 @@ export const Cell = memo(function Cell({
   isActive,
   isEditing,
   isSelected,
+  format,
   onSelect,
   onStartEdit,
   onStopEdit,
@@ -51,16 +55,21 @@ export const Cell = memo(function Cell({
     }
   }
 
+  const cellStyle = {
+    width,
+    minWidth: width,
+    height,
+    fontWeight: format?.isBold ? '700' : '400',
+    fontStyle: format?.isItalic ? 'italic' : 'normal',
+    textDecoration: format?.isUnderline ? 'underline' : 'none',
+    color: format?.textColor,
+    backgroundColor: format?.backgroundColor,
+    textAlign: format?.textAlign,
+  };
+
   if (isEditing) {
     return (
-      <td
-        className="cell cell_active"
-        style={{
-          width,
-          minWidth: width,
-          height,
-        }}
-      >
+      <td className="cell cell_active" style={cellStyle}>
         <input
           className="cell_input"
           value={localValue}
@@ -86,11 +95,7 @@ export const Cell = memo(function Cell({
   return (
     <td
       className={className.join(' ')}
-      style={{
-        width,
-        minWidth: width,
-        height,
-      }}
+      style={cellStyle}
       onClick={onSelect}
       onDoubleClick={onStartEdit}
       onContextMenu={onContexMenu}

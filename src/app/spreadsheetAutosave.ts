@@ -6,6 +6,7 @@ import {
   redo,
   setCell,
   setCells,
+  setCellFormat,
   setColumnsCount,
   setRowsCount,
   undo,
@@ -15,7 +16,7 @@ import { setSaveStatus } from '@features/ui/uiSlice';
 export const spreadsheetAutosave = createListenerMiddleware();
 
 spreadsheetAutosave.startListening({
-  matcher: isAnyOf(setCell, setCells, setRowsCount, setColumnsCount, undo, redo),
+  matcher: isAnyOf(setCell, setCells, setRowsCount, setColumnsCount, setCellFormat, undo, redo),
   effect: async (_action, listenerApi) => {
     listenerApi.cancelActiveListeners();
 

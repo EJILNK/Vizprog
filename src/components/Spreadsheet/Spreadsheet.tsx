@@ -8,6 +8,7 @@ import {
   redo,
   setCell,
   setCells,
+  setCellFormat,
   setColumnsCount,
   setRowsCount,
   setSpreadsheet,
@@ -20,6 +21,7 @@ import type {
   ActiveCell,
   SpreadsheetData,
   SelectedRange,
+  CellFormat,
   ContextMenuState,
   ColumnWidths,
   RowHeights,
@@ -34,6 +36,8 @@ import { SpreadsheetContextMenu } from './SpreadsheetContextMenu';
 
 import { downloadFile } from '@utils/download';
 import { createCsvFromCells, parseCsvToCells } from '@utils/csvparse';
+
+import { FormatBar } from './FormatBar';
 
 import './Spreadsheet.css';
 
@@ -77,6 +81,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
 
   const activeCellId = getCellId(activeCell.rowIndex, activeCell.columnIndex);
   const activeRawValue = cells[activeCellId]?.raw ?? '';
+  const activeCellFormat = cells[activeCellId]?.format;
 
   useEffect(() => {
     dispatch(
@@ -97,6 +102,35 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
         value,
       }),
     );
+  }
+
+  function updateActiveCellFormat(format: CellFormat): void {
+    dispatch(setHasUnsavedChanges(true));
+
+    dispatch(
+      setCellFormat({
+        cellId: activeCellId,
+        format,
+      }),
+    );
+  }
+
+  function toggleBold(): void {
+    updateActiveCellFormat({
+      isBold: !activeCellFormat?.isBold,
+    });
+  }
+
+  function toggleItalic(): void {
+    updateActiveCellFormat({
+      isItalic: !activeCellFormat?.isItalic,
+    });
+  }
+
+  function toggleUnderline(): void {
+    updateActiveCellFormat({
+      isUnderline: !activeCellFormat?.isUnderline,
+    });
   }
 
   function handleSelectCell(
@@ -481,6 +515,13 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
         </label>
       </div>
 
+      <FormatBar
+        activeFormat={activeCellFormat}
+        onToggleBold={toggleBold}
+        onToggleItalic={toggleItalic}
+        onToggleUnderline={toggleUnderline}
+      />
+
       <FormulBar
         activeCellId={activeCellId}
         value={activeRawValue}
@@ -537,6 +578,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
                   const cellId = getCellId(rowIndex, columnIndex);
                   const rawValue = cells[cellId]?.raw ?? '';
                   const displayValue = getCellDisplayValue(cells, rawValue);
+                  const cellFormat = cells[cellId]?.format;
                   const columnWidth = columnWidths[columnIndex] ?? DEFAULT_COLUMN_WIDTH;
                   const rowHeight = rowHeights[rowIndex] ?? DEFAULT_ROW_HEIGHT;
                   const isActive =
@@ -552,6 +594,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
                       key={cellId}
                       value={displayValue}
                       rawValue={rawValue}
+                      format={cellFormat}
                       width={columnWidth}
                       height={rowHeight}
                       isActive={isActive}

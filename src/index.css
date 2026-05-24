@@ -236,7 +236,7 @@ input {
   width: 360px;
   max-width: 100%;
   padding: 20px;
-  border: 1px solid #d6d6d6;
+  border: 1px solid #d3d46c;
   background: #ffffff;
 }
 
@@ -253,14 +253,14 @@ input {
 
 .auth_form input {
   padding: 8px;
-  border: 1px solid #c8c8c8;
+  border: 1px solid #1de2c1;
 }
 
 .auth_form button {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #c8c8c8;
-  background: #ffffff;
+  border: 1px solid #b32424;
+  background: #89d44c;
   cursor: pointer;
 }
 
@@ -288,6 +288,6 @@ input {
 .app_user button {
   padding: 6px 10px;
   border: 1px solid #c8c8c8;
-  background: #ffffff;
+  background: #d81717;
   cursor: pointer;
 }

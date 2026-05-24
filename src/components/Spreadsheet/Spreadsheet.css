@@ -174,3 +174,23 @@
 .spreadsheet_import_button input {
   display: none;
 }
+
+.format_bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.format_bar_button {
+  min-width: 34px;
+  padding: 6px 10px;
+  border: 1px solid #ece91d;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.format_bar_button.active {
+  background: #0a67e0;
+  border-color: #2476e2;
+}
