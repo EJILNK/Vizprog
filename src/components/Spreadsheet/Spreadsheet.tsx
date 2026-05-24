@@ -68,6 +68,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   const [selectedRange, setSelectedRange] = useState<SelectedRange | null>(null);
   const [editingCellId, setEditingCellId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
+  const [clipboardValue, setClipboardValue] = useState<string | null>(null);
 
   const saveStatus = useAppSelector((state) => state.ui.saveStatus);
   const hasUnsavedChanges = useAppSelector((state) => state.ui.hasUnsavedChanges);
@@ -103,6 +104,69 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
         value,
       }),
     );
+  }
+
+  function clearActiveCell(): void {
+    dispatch(setHasUnsavedChanges(true));
+
+    dispatch(
+      setCell({
+        cellId: activeCellId,
+        value: '',
+      }),
+    );
+  }
+
+  function copyActiveCell(): void {
+    setClipboardValue(activeRawValue);
+  }
+
+  function cutActiveCell(): void {
+    setClipboardValue(activeRawValue);
+    clearActiveCell();
+  }
+
+  function pasteToActiveCell(): void {
+    if (clipboardValue === null) {
+      return;
+    }
+
+    updateCell(activeCellId, clipboardValue);
+  }
+
+  function moveActiveCell(rowDelta: number, columnDelta: number): void {
+    setActiveCell((currentActiveCell) => ({
+      rowIndex: Math.min(Math.max(currentActiveCell.rowIndex + rowDelta, 0), rowsCount - 1),
+      columnIndex: Math.min(
+        Math.max(currentActiveCell.columnIndex + columnDelta, 0),
+        columnsCount - 1,
+      ),
+    }));
+
+    setSelectedRange(null);
+  }
+
+  function moveActiveCellRight(): void {
+    moveActiveCell(0, 1);
+  }
+
+  function selectAllCells(): void {
+    setSelectedRange({
+      start: {
+        rowIndex: 0,
+        columnIndex: 0,
+      },
+      end: {
+        rowIndex: rowsCount - 1,
+        columnIndex: columnsCount - 1,
+      },
+    });
+  }
+  function focusSpreadsheet(): void {
+    window.requestAnimationFrame(() => {
+      const spreadsheetElement = window.document.querySelector<HTMLElement>('.spreadsheet');
+      spreadsheetElement?.focus();
+    });
   }
 
   function updateActiveCellFormat(format: CellFormat): void {
@@ -198,6 +262,10 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>): void {
+    if (editingCellId) {
+      return;
+    }
+
     if (event.key === 'Enter') {
       setEditingCellId(activeCellId);
     }
@@ -227,6 +295,79 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
       event.preventDefault();
       dispatch(redo());
       dispatch(setHasUnsavedChanges(true));
+      return;
+    }
+    if (event.ctrlKey && event.key.toLowerCase() === 'b') {
+      event.preventDefault();
+      toggleBold();
+      return;
+    }
+
+    if (event.ctrlKey && event.key.toLowerCase() === 'i') {
+      event.preventDefault();
+      toggleItalic();
+      return;
+    }
+
+    if (event.ctrlKey && event.key.toLowerCase() === 'u') {
+      event.preventDefault();
+      toggleUnderline();
+      return;
+    }
+
+    if (event.ctrlKey && event.key.toLowerCase() === 'c') {
+      event.preventDefault();
+      copyActiveCell();
+      return;
+    }
+
+    if (event.ctrlKey && event.key.toLowerCase() === 'x') {
+      event.preventDefault();
+      cutActiveCell();
+      return;
+    }
+
+    if (event.ctrlKey && event.key.toLowerCase() === 'v') {
+      event.preventDefault();
+      pasteToActiveCell();
+      return;
+    }
+    if (event.ctrlKey && event.key.toLowerCase() === 'a') {
+      event.preventDefault();
+      selectAllCells();
+      return;
+    }
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      event.preventDefault();
+      clearActiveCell();
+      return;
+    }
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      moveActiveCellRight();
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveActiveCell(-1, 0);
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveActiveCell(1, 0);
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      moveActiveCell(0, -1);
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      moveActiveCell(0, 1);
       return;
     }
   }
@@ -635,7 +776,10 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
                       isEditing={editingCellId === cellId}
                       onSelect={(event) => handleSelectCell(event, position)}
                       onStartEdit={() => setEditingCellId(cellId)}
-                      onStopEdit={() => setEditingCellId(null)}
+                      onStopEdit={() => {
+                        setEditingCellId(null);
+                        focusSpreadsheet();
+                      }}
                       onChange={(value) => updateCell(cellId, value)}
                       onContexMenu={(event) => handleContextMenu(event, position)}
                     />
