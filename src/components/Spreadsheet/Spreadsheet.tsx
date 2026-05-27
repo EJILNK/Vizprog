@@ -53,6 +53,11 @@ type SpreadsheetProps = {
   onDocumentChange: (document: SpreadsheetDocument) => void;
 };
 
+type ClipboardCell = {
+  raw: string;
+  format?: CellFormat;
+};
+
 export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   const dispatch = useAppDispatch();
 
@@ -68,7 +73,7 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   const [selectedRange, setSelectedRange] = useState<SelectedRange | null>(null);
   const [editingCellId, setEditingCellId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
-  const [clipboardValue, setClipboardValue] = useState<string | null>(null);
+  const [clipboardCell, setClipboardCell] = useState<ClipboardCell | null>(null);
 
   const saveStatus = useAppSelector((state) => state.ui.saveStatus);
   const hasUnsavedChanges = useAppSelector((state) => state.ui.hasUnsavedChanges);
@@ -118,20 +123,41 @@ export function Spreadsheet({ document, onDocumentChange }: SpreadsheetProps) {
   }
 
   function copyActiveCell(): void {
-    setClipboardValue(activeRawValue);
+    setClipboardCell({
+      raw: activeRawValue,
+      format: activeCellFormat,
+    });
   }
 
   function cutActiveCell(): void {
-    setClipboardValue(activeRawValue);
+    setClipboardCell({
+      raw: activeRawValue,
+      format: activeCellFormat,
+    });
+
     clearActiveCell();
   }
 
   function pasteToActiveCell(): void {
-    if (clipboardValue === null) {
+    if (!clipboardCell) {
       return;
     }
 
-    updateCell(activeCellId, clipboardValue);
+    dispatch(setHasUnsavedChanges(true));
+
+    dispatch(
+      setCell({
+        cellId: activeCellId,
+        value: clipboardCell.raw,
+      }),
+    );
+
+    dispatch(
+      setCellFormat({
+        cellId: activeCellId,
+        format: clipboardCell.format ?? {},
+      }),
+    );
   }
 
   function moveActiveCell(rowDelta: number, columnDelta: number): void {
